@@ -28,6 +28,14 @@ Streamlit
 
 TMDB API
 
+## 📂 Dataset
+
+- Source: [TMDB 5000 Movie Dataset](https://www.kaggle.com/datasets/tmdb/tmdb-movie-metadata)
+- Platform: Kaggle
+- Format: CSV
+- Description: Contains movie metadata such as title, genres, cast, crew, overview, and ratings.
+
+
 ## 📂 PROJECT STRUCTURE
 Movie-Recommendation-System/
 │
