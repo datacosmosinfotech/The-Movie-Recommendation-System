@@ -102,7 +102,7 @@ I would like to thank TMDB for providing movie data and posters. I also acknowle
 
 ## 👩‍💻 AUTHOR
 
-Asma Sirkhot:Asma Sirkhot  
+Asma Sirkhot: 
 Data Scientist | Python | Machine Learning  
 📍 Mumbai, India  
 🔗 GitHub:https://github.com/datacosmosinfotech
