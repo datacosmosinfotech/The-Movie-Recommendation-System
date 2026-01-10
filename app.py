@@ -24,16 +24,14 @@ import pickle
 
 PKL_PATH = "movie_data.pkl"
 
-# Download pkl only if not present
+# Download only if file does not exist
 if not os.path.exists(PKL_PATH):
     url = "https://drive.google.com/uc?id=1FaykR5kIP9WCbSE5VZGxZOseR2ABWcaW"
     gdown.download(url, PKL_PATH, quiet=False)
 
-# Load the pkl file
+# Now safely load the file
 with open(PKL_PATH, "rb") as file:
     movies, cosine_sim = pickle.load(file)
-
-movies, cosine_sim = load_data()
 
 # ---------------- FETCH POSTER ----------------
 @st.cache_data(show_spinner=False)
@@ -97,4 +95,5 @@ if st.button("Recommend"):
             with col:
                 st.image(poster_url, use_container_width=True)
                 st.caption(title)
+
 
