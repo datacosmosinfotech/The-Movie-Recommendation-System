@@ -2,5 +2,6 @@ streamlit==1.28.2
 pandas
 numpy
 requests
-gdown==4.7.1
+huggingface_hub
+
 
