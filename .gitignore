@@ -9,10 +9,6 @@ venv/
 .idea/
 .vscode/
 
-# Data & model files
-*.pkl
-*.csv
-*.zip
 
 # Environment variables
 .env
