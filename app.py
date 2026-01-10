@@ -11,8 +11,24 @@ import urllib.parse
 TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
 
 # ---------------- LOAD MOVIES & SIMILARITY ----------------
-with open("movie_data.pkl", "rb") as file:
-    movies, cosine_sim = pickle.load(file)
+import os
+
+PKL_URL = "https://drive.google.com/uc?id=1FaykR5kIP9WcbSE5VZGxZOseR2ABWcaw"
+PKL_FILE = "movie_data.pkl"
+
+@st.cache_resource
+def load_pkl_from_url():
+    if not os.path.exists(PKL_FILE):
+        st.info("Downloading model file... please wait ⏳")
+        response = requests.get(PKL_URL)
+        response.raise_for_status()
+        with open(PKL_FILE, "wb") as f:
+            f.write(response.content)
+
+    with open(PKL_FILE, "rb") as file:
+        return pickle.load(file)
+
+movies, cosine_sim = load_pkl_from_url()
 
 movies = movies.dropna(subset=["title"]).reset_index(drop=True)
 
@@ -84,4 +100,5 @@ if st.button("Recommend"):
         for col, (title, poster_url) in zip(cols, recommendations):
             with col:
                 st.image(poster_url, use_container_width=True)
+
                 st.caption(title)
