@@ -1,3 +1,5 @@
+# IMPORT LIBRARIES
+# =========================================================
 import os
 import pickle
 import requests
@@ -6,7 +8,7 @@ import gdown
 import streamlit as st
 
 # =========================================================
-# STREAMLIT PAGE CONFIG
+# STREAMLIT PAGE CONFIG (MUST BE FIRST st CALL)
 # =========================================================
 st.set_page_config(
     page_title="Movie Recommendation System",
@@ -24,7 +26,7 @@ TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
 PKL_PATH = "movie_data.pkl"
 PKL_URL = "https://drive.google.com/uc?id=1FaykR5kIP9WCbSE5VZGxZOseR2ABWcaW"
 
-@st.cache_resource
+@st.cache(allow_output_mutation=True)
 def load_data():
     if not os.path.exists(PKL_PATH):
         with st.spinner("Downloading data file..."):
@@ -40,16 +42,17 @@ def load_data():
 movies, cosine_sim = load_data()
 
 # =========================================================
-# FETCH POSTER (UNCHANGED LOGIC)
+# FETCH POSTER
 # =========================================================
-@st.cache_data(show_spinner=False)
+@st.cache(show_spinner=False)
 def fetch_poster(title):
     try:
         query = urllib.parse.quote(title)
         url = (
-            f"https://api.themoviedb.org/3/search/movie"
+            "https://api.themoviedb.org/3/search/movie"
             f"?api_key={TMDB_API_KEY}&query={query}"
         )
+
         response = requests.get(url, timeout=10)
         response.raise_for_status()
         data = response.json()
@@ -58,15 +61,15 @@ def fetch_poster(title):
             for movie in data["results"]:
                 poster_path = movie.get("poster_path")
                 if poster_path:
-                    return f"https://image.tmdb.org/t/p/w500{poster_path}"
+                    return "https://image.tmdb.org/t/p/w500" + poster_path
 
         return None
 
-    except Exception:
+    except:
         return None
 
 # =========================================================
-# RECOMMEND ONLY MOVIES WITH POSTERS (UNCHANGED LOGIC)
+# RECOMMEND MOVIES WITH POSTERS
 # =========================================================
 def get_recommendations_with_posters(title, top_n=5):
     idx = movies[movies["title"] == title].index[0]
@@ -104,10 +107,10 @@ if st.button("Recommend"):
     if not recommendations:
         st.warning("No recommended movies with posters found.")
     else:
-        st.subheader("Top 5 Recommended Movies (With Posters)")
+        st.subheader("Top 5 Recommended Movies")
         cols = st.columns(5)
 
         for col, (title, poster_url) in zip(cols, recommendations):
             with col:
-                st.image(poster_url, use_container_width=True)
+                st.image(poster_url, use_column_width=True)
                 st.caption(title)
