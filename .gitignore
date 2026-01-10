@@ -2,6 +2,9 @@
 _pycache_/
 *.pyc
 
+movie_data.pkl
+*.pkl
+
 # Virtual environment
 venv/
 
