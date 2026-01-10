@@ -108,5 +108,5 @@ I would like to thank TMDB for providing movie data and posters. I also acknowle
 Asma Sirkhot: 
 Data Scientist | Python | Machine Learning  
 📍 Mumbai, India  
-🔗 GitHub:https://github.com/datacosmosinfotech
-🔗 LinkedIn:https://www.linkedin.com/in/asma-sirkhot-85b841362
+
+🔗 LinkedIn: https://www.linkedin.com/in/asma-sirkhot-85b841362/details/projects/
