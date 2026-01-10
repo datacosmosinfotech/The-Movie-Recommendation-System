@@ -11,36 +11,20 @@ import urllib.parse
 TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
 
 # ---------------- LOAD MOVIES & SIMILARITY ----------------
-import os
-import gdown
-import streamlit as st
+rom huggingface_hub import hf_hub_download
 import pickle
-
-PKL_FILE = "movie_data.pkl"
-PKL_FILE_ID = "1FaykR5kIP9WcbSE5VZGxZOseR2ABWcaw"
+import streamlit as st
 
 @st.cache_resource
-def load_pkl_from_drive():
-    if not os.path.exists(PKL_FILE):
-        st.info("Downloading model file from Google Drive ⏳")
+def load_model():
+    path = hf_hub_download(
+        repo_id="Datascientistgirly/Movie_Recommendation_System",
+        filename="movie_data.pkl"
+    )
+    with open(path, "rb") as f:
+        return pickle.load(f)
 
-        url = f"https://drive.google.com/uc?id={PKL_FILE_ID}"
-        gdown.download(
-            url=url,
-            output=PKL_FILE,
-            quiet=False,
-            fuzzy=True
-        )
-
-    # 🔴 SAFETY CHECK (important)
-    if not os.path.exists(PKL_FILE):
-        st.error("Model file download failed. Check Google Drive permissions.")
-        st.stop()
-
-    with open(PKL_FILE, "rb") as file:
-        return pickle.load(file)
-
-movies, cosine_sim = load_pkl_from_drive()
+movies, cosine_sim = load_model()
 
 movies = movies.dropna(subset=["title"]).reset_index(drop=True)
 
@@ -114,5 +98,6 @@ if st.button("Recommend"):
                 st.image(poster_url, use_container_width=True)
 
                 st.caption(title)
+
 
 
