@@ -18,12 +18,20 @@ st.title("🎬 Movie Recommendation System")
 TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
 
 # ---------------- LOAD PKL ----------------
-@st.cache_resource
-def load_data():
-    with open("movie_data.pkl", "rb") as file:
-        movies, cosine_sim = pickle.load(file)
-    movies = movies.dropna(subset=["title"]).reset_index(drop=True)
-    return movies, cosine_sim
+import os
+import gdown
+import pickle
+
+PKL_PATH = "movie_data.pkl"
+
+# Download pkl only if not present
+if not os.path.exists(PKL_PATH):
+    url = "https://drive.google.com/uc?id=1FaykR5kIP9WCbSE5VZGxZOseR2ABWcaW"
+    gdown.download(url, PKL_PATH, quiet=False)
+
+# Load the pkl file
+with open(PKL_PATH, "rb") as file:
+    movies, cosine_sim = pickle.load(file)
 
 movies, cosine_sim = load_data()
 
@@ -89,3 +97,4 @@ if st.button("Recommend"):
             with col:
                 st.image(poster_url, use_container_width=True)
                 st.caption(title)
+
