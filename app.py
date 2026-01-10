@@ -11,8 +11,10 @@ import urllib.parse
 TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
 
 # ---------------- LOAD MOVIES & SIMILARITY ----------------
-import gdown
 import os
+import gdown
+import streamlit as st
+import pickle
 
 PKL_FILE = "movie_data.pkl"
 PKL_FILE_ID = "1FaykR5kIP9WcbSE5VZGxZOseR2ABWcaw"
@@ -21,11 +23,19 @@ PKL_FILE_ID = "1FaykR5kIP9WcbSE5VZGxZOseR2ABWcaw"
 def load_pkl_from_drive():
     if not os.path.exists(PKL_FILE):
         st.info("Downloading model file from Google Drive ⏳")
+
+        url = f"https://drive.google.com/uc?id={PKL_FILE_ID}"
         gdown.download(
-            url=f"https://drive.google.com/uc?id={PKL_FILE_ID}",
+            url=url,
             output=PKL_FILE,
-            quiet=False
+            quiet=False,
+            fuzzy=True
         )
+
+    # 🔴 SAFETY CHECK (important)
+    if not os.path.exists(PKL_FILE):
+        st.error("Model file download failed. Check Google Drive permissions.")
+        st.stop()
 
     with open(PKL_FILE, "rb") as file:
         return pickle.load(file)
@@ -104,4 +114,5 @@ if st.button("Recommend"):
                 st.image(poster_url, use_container_width=True)
 
                 st.caption(title)
+
 
