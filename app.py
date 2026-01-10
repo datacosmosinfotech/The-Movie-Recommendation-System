@@ -11,24 +11,26 @@ import urllib.parse
 TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
 
 # ---------------- LOAD MOVIES & SIMILARITY ----------------
+import gdown
 import os
 
-PKL_URL = "https://drive.google.com/uc?id=1FaykR5kIP9WcbSE5VZGxZOseR2ABWcaw"
 PKL_FILE = "movie_data.pkl"
+PKL_FILE_ID = "1FaykR5kIP9WcbSE5VZGxZOseR2ABWcaw"
 
 @st.cache_resource
-def load_pkl_from_url():
+def load_pkl_from_drive():
     if not os.path.exists(PKL_FILE):
-        st.info("Downloading model file... please wait ⏳")
-        response = requests.get(PKL_URL)
-        response.raise_for_status()
-        with open(PKL_FILE, "wb") as f:
-            f.write(response.content)
+        st.info("Downloading model file from Google Drive ⏳")
+        gdown.download(
+            url=f"https://drive.google.com/uc?id={PKL_FILE_ID}",
+            output=PKL_FILE,
+            quiet=False
+        )
 
     with open(PKL_FILE, "rb") as file:
         return pickle.load(file)
 
-movies, cosine_sim = load_pkl_from_url()
+movies, cosine_sim = load_pkl_from_drive()
 
 movies = movies.dropna(subset=["title"]).reset_index(drop=True)
 
@@ -102,3 +104,4 @@ if st.button("Recommend"):
                 st.image(poster_url, use_container_width=True)
 
                 st.caption(title)
+
