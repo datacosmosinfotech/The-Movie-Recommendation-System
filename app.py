@@ -1,95 +1,92 @@
-# =========================================================
-# IMPORTS
-# =========================================================
 import os
 import pickle
 import requests
+import urllib.parse
 import gdown
 import streamlit as st
 
 # =========================================================
-# STREAMLIT PAGE CONFIG (MUST BE FIRST STREAMLIT CALL)
+# STREAMLIT PAGE CONFIG
 # =========================================================
 st.set_page_config(
     page_title="Movie Recommendation System",
-    page_icon="🎬",
     layout="wide"
 )
 
 # =========================================================
-# CONFIG
+# TMDB API KEY
 # =========================================================
-TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"  
+TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
+
+# =========================================================
+# LOAD MOVIES & SIMILARITY (DOWNLOAD PKL IF NEEDED)
+# =========================================================
 PKL_PATH = "movie_data.pkl"
 PKL_URL = "https://drive.google.com/uc?id=1FaykR5kIP9WCbSE5VZGxZOseR2ABWcaW"
 
-# =========================================================
-# LOAD PKL FILE (DOWNLOAD ONLY ONCE)
-# =========================================================
 @st.cache_resource
 def load_data():
     if not os.path.exists(PKL_PATH):
-        with st.spinner("Downloading model file..."):
+        with st.spinner("Downloading data file..."):
             gdown.download(PKL_URL, PKL_PATH, quiet=False)
 
     with open(PKL_PATH, "rb") as file:
         movies, cosine_sim = pickle.load(file)
 
+    movies = movies.dropna(subset=["title"]).reset_index(drop=True)
     return movies, cosine_sim
 
 
 movies, cosine_sim = load_data()
 
 # =========================================================
-# FETCH POSTER FROM TMDB
+# FETCH POSTER (UNCHANGED LOGIC)
 # =========================================================
-def fetch_poster(movie_id):
+@st.cache_data(show_spinner=False)
+def fetch_poster(title):
     try:
-        url = f"https://api.themoviedb.org/3/movie/{movie_id}"
-        params = {"api_key": TMDB_API_KEY}
-        response = requests.get(url, params=params, timeout=5)
+        query = urllib.parse.quote(title)
+        url = (
+            f"https://api.themoviedb.org/3/search/movie"
+            f"?api_key={TMDB_API_KEY}&query={query}"
+        )
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         data = response.json()
 
-        poster_path = data.get("poster_path")
-        if poster_path:
-            return f"https://image.tmdb.org/t/p/w500{poster_path}"
+        if data.get("results"):
+            for movie in data["results"]:
+                poster_path = movie.get("poster_path")
+                if poster_path:
+                    return f"https://image.tmdb.org/t/p/w500{poster_path}"
 
         return None
 
     except Exception:
         return None
 
-
 # =========================================================
-# RECOMMENDATION FUNCTION (SKIPS MOVIES WITHOUT POSTERS)
+# RECOMMEND ONLY MOVIES WITH POSTERS (UNCHANGED LOGIC)
 # =========================================================
-def recommend(movie_title, n=5):
-    idx = movies[movies["title"] == movie_title].index[0]
-    distances = cosine_sim[idx]
+def get_recommendations_with_posters(title, top_n=5):
+    idx = movies[movies["title"] == title].index[0]
 
-    sorted_movies = sorted(
-        list(enumerate(distances)),
-        reverse=True,
-        key=lambda x: x[1]
-    )
+    scores = list(enumerate(cosine_sim[idx]))
+    scores = sorted(scores, key=lambda x: x[1], reverse=True)
 
-    recommendations = []
+    results = []
 
-    for i in sorted_movies[1:]:  # skip the selected movie itself
-        movie_id = movies.iloc[i[0]].movie_id
-        title = movies.iloc[i[0]].title
+    for i, score in scores[1:50]:
+        movie_title = movies.iloc[i]["title"]
+        poster = fetch_poster(movie_title)
 
-        poster = fetch_poster(movie_id)
-
-        # ✅ keep only movies with posters
         if poster:
-            recommendations.append((title, poster))
+            results.append((movie_title, poster))
 
-        if len(recommendations) == n:
+        if len(results) == top_n:
             break
 
-    return recommendations
-
+    return results
 
 # =========================================================
 # STREAMLIT UI
@@ -102,14 +99,14 @@ selected_movie = st.selectbox(
 )
 
 if st.button("Recommend"):
-    recommendations = recommend(selected_movie)
-
-    st.subheader("Top 5 Recommended Movies (With Posters)")
+    recommendations = get_recommendations_with_posters(selected_movie, top_n=5)
 
     if not recommendations:
-        st.warning("No posters available for similar movies.")
+        st.warning("No recommended movies with posters found.")
     else:
-        cols = st.columns(len(recommendations))
+        st.subheader("Top 5 Recommended Movies (With Posters)")
+        cols = st.columns(5)
+
         for col, (title, poster_url) in zip(cols, recommendations):
             with col:
                 st.image(poster_url, use_container_width=True)
