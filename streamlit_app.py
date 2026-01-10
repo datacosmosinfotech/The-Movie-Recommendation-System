@@ -4,29 +4,28 @@ import numpy as np
 import requests
 import pickle
 import urllib.parse
+import os
 
-# =========================================================
-# 🔑 PUT YOUR TMDB API KEY HERE
-# =========================================================
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Movie Recommendation System",
+    layout="wide"
+)
+
+st.title("🎬 Movie Recommendation System")
+
+# ---------------- TMDB API KEY ----------------
 TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
 
-# ---------------- LOAD MOVIES & SIMILARITY ----------------
-rom huggingface_hub import hf_hub_download
-import pickle
-import streamlit as st
-
+# ---------------- LOAD PKL ----------------
 @st.cache_resource
-def load_model():
-    path = hf_hub_download(
-        repo_id="Datascientistgirly/Movie_Recommendation_System",
-        filename="movie_data.pkl"
-    )
-    with open(path, "rb") as f:
-        return pickle.load(f)
+def load_data():
+    with open("movie_data.pkl", "rb") as file:
+        movies, cosine_sim = pickle.load(file)
+    movies = movies.dropna(subset=["title"]).reset_index(drop=True)
+    return movies, cosine_sim
 
-movies, cosine_sim = load_model()
-
-movies = movies.dropna(subset=["title"]).reset_index(drop=True)
+movies, cosine_sim = load_data()
 
 # ---------------- FETCH POSTER ----------------
 @st.cache_data(show_spinner=False)
@@ -37,22 +36,19 @@ def fetch_poster(title):
             f"https://api.themoviedb.org/3/search/movie"
             f"?api_key={TMDB_API_KEY}&query={query}"
         )
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        response = requests.get(url, timeout=5)
         data = response.json()
 
-        if data.get("results"):
-            for movie in data["results"]:
-                poster_path = movie.get("poster_path")
-                if poster_path:
-                    return f"https://image.tmdb.org/t/p/w500{poster_path}"
+        if data["results"]:
+            poster_path = data["results"][0].get("poster_path")
+            if poster_path:
+                return f"https://image.tmdb.org/t/p/w500{poster_path}"
+    except:
+        pass
 
-        return None
+    return None
 
-    except Exception:
-        return None
-
-# ---------------- RECOMMEND ONLY MOVIES WITH POSTERS ----------------
+# ---------------- RECOMMEND FUNCTION ----------------
 def get_recommendations_with_posters(title, top_n=5):
     idx = movies[movies["title"] == title].index[0]
 
@@ -61,8 +57,7 @@ def get_recommendations_with_posters(title, top_n=5):
 
     results = []
 
-    # Take more candidates so filtering is possible
-    for i, score in scores[1:50]:
+    for i, score in scores[1:50]:  # take more for filtering
         movie_title = movies.iloc[i]["title"]
         poster = fetch_poster(movie_title)
 
@@ -75,9 +70,6 @@ def get_recommendations_with_posters(title, top_n=5):
     return results
 
 # ---------------- STREAMLIT UI ----------------
-st.set_page_config(page_title="Movie Recommendation System", layout="wide")
-st.title("🎬 Movie Recommendation System")
-
 selected_movie = st.selectbox(
     "Select a movie you like:",
     movies["title"].values
@@ -96,8 +88,4 @@ if st.button("Recommend"):
         for col, (title, poster_url) in zip(cols, recommendations):
             with col:
                 st.image(poster_url, use_container_width=True)
-
                 st.caption(title)
-
-
-
