@@ -1,3 +1,6 @@
+# =========================================================
+# IMPORTS
+# =========================================================
 import os
 import pickle
 import requests
@@ -5,19 +8,29 @@ import gdown
 import streamlit as st
 
 # =========================================================
+# STREAMLIT PAGE CONFIG (MUST BE FIRST STREAMLIT CALL)
+# =========================================================
+st.set_page_config(
+    page_title="Movie Recommendation System",
+    page_icon="🎬",
+    layout="wide"
+)
+
+# =========================================================
 # CONFIG
 # =========================================================
-TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"
+TMDB_API_KEY = "6f135fe03126ac6a83ff54eafc691c22"  
 PKL_PATH = "movie_data.pkl"
 PKL_URL = "https://drive.google.com/uc?id=1FaykR5kIP9WCbSE5VZGxZOseR2ABWcaW"
 
 # =========================================================
-# LOAD PKL (DOWNLOAD ONCE)
+# LOAD PKL FILE (DOWNLOAD ONLY ONCE)
 # =========================================================
 @st.cache_resource
 def load_data():
     if not os.path.exists(PKL_PATH):
-        gdown.download(PKL_URL, PKL_PATH, quiet=False)
+        with st.spinner("Downloading model file..."):
+            gdown.download(PKL_URL, PKL_PATH, quiet=False)
 
     with open(PKL_PATH, "rb") as file:
         movies, cosine_sim = pickle.load(file)
@@ -28,7 +41,7 @@ def load_data():
 movies, cosine_sim = load_data()
 
 # =========================================================
-# FETCH MOVIE POSTER
+# FETCH POSTER FROM TMDB
 # =========================================================
 def fetch_poster(movie_id):
     try:
@@ -40,6 +53,7 @@ def fetch_poster(movie_id):
         poster_path = data.get("poster_path")
         if poster_path:
             return f"https://image.tmdb.org/t/p/w500{poster_path}"
+
         return None
 
     except Exception:
@@ -47,7 +61,7 @@ def fetch_poster(movie_id):
 
 
 # =========================================================
-# RECOMMENDATION LOGIC (SKIP MOVIES WITHOUT POSTERS)
+# RECOMMENDATION FUNCTION (SKIPS MOVIES WITHOUT POSTERS)
 # =========================================================
 def recommend(movie_title, n=5):
     idx = movies[movies["title"] == movie_title].index[0]
@@ -61,13 +75,13 @@ def recommend(movie_title, n=5):
 
     recommendations = []
 
-    for i in sorted_movies[1:]:  # skip the selected movie
+    for i in sorted_movies[1:]:  # skip the selected movie itself
         movie_id = movies.iloc[i[0]].movie_id
         title = movies.iloc[i[0]].title
 
         poster = fetch_poster(movie_id)
 
-        # ✅ ONLY KEEP MOVIES WITH POSTERS
+        # ✅ keep only movies with posters
         if poster:
             recommendations.append((title, poster))
 
@@ -80,12 +94,6 @@ def recommend(movie_title, n=5):
 # =========================================================
 # STREAMLIT UI
 # =========================================================
-st.set_page_config(
-    page_title="Movie Recommendation System",
-    page_icon="🎬",
-    layout="wide"
-)
-
 st.title("🎬 Movie Recommendation System")
 
 selected_movie = st.selectbox(
