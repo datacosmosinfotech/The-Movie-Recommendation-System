@@ -2,6 +2,6 @@ streamlit==1.28.2
 pandas
 numpy
 requests
-huggingface_hub
+
 
 
