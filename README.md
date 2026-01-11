@@ -47,15 +47,6 @@ TMDB API
 - Format: CSV
 - Description: Contains movie metadata such as title, genres, cast, crew, overview, and ratings.
 
-
-## 📂 PROJECT STRUCTURE
-Movie-Recommendation-System/
-│
-├── app.py
-├── movie_data.pkl
-├── requirements.txt
-├── README.md
-
 ## ⚙️ HOW IT WORKS
 
 Movie data is preprocessed and important features are combined.
